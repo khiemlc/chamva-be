@@ -1,0 +1,53 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for temporary files, like logs
+tmp/
+temp/
+
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+
+# Optional npm cache directory
+.npm
+
+# Output of build tools
+/dist
+/build
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Coverage directory used by testing tools
+/coverage
+
+# Debugger configurations
+/.vscode/launch.json
+
+# Optional dotenv environment variables file
+.env.test
+.env.production
+
+# Logs created by PM2 (process manager)
+pm2-logs/
+
+# ESLint cache
+.eslintcache
