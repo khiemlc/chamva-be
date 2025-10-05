@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-const authRoutes = require("./services/auth"); // Auth routes (no token required)
 
 // Middleware
 const bodyParser = require("body-parser");
@@ -11,16 +10,23 @@ app.use((req, res, next) => {
   next();
 });
 // Import Routes
+const authRoutes = require("./services/auth"); // Auth routes (no token required)
 const userRoutes = require("./services/userService");
-
+const boardRoutes = require("./services/board");
+const taskRoutes = require("./services/task");
+const commentRoutes = require("./services/comment");
+// const notificationRoutes = require("./services/notificationService");
+const reportRoutes = require("./services/report");
 const authentication = require("./middlewares/authMiddleware"); // Change here: Import authentication directly
 let cors = require("cors");
 app.use(cors());
-app.use("/api", authRoutes); // These routes (login, register, forgot password) won't require authentication
-
-// Apply the authentication middleware to all routes that require a token
-app.use(authentication); // No need to invoke it as a function
+app.use("/api/auth", authRoutes);
+// app.use(authentication); // No need to invoke it as a function
 app.use("/api/users", userRoutes); // User routes that require authentication
-
+app.use("/api/boards", boardRoutes); // Order routes that require authentication
+app.use("/api/tasks", taskRoutes); // User routes that require authentication
+app.use("/api/comments", commentRoutes); // User routes that require authentication
+// app.use("/api/notifications", notificationRoutes); // User routes that require authentication
+app.use("/api/reports", reportRoutes); // User routes that require authentication
 // Export app for server.js
 module.exports = app;

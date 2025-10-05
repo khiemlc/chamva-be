@@ -1,6 +1,7 @@
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
+
 require("dotenv").config();
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,74 +9,47 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Storage duy nhất (ảnh + docs + excel)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  allowedFormats: ["jpg", "png", "jpeg", "gif"],
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-  // lưu vào folder avatar trên cloudinary
-  params: {
-    folder: "avatar",
-  },
-});
+  params: async (req, file) => {
+    const ext = file.originalname.split(".").pop(); // lấy đuôi file
+    const baseName = file.originalname.replace(/\.[^/.]+$/, ""); // bỏ đuôi
 
-// Cấu hình mới cho lưu trữ tài liệu
-const documentStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  allowedFormats: ["pdf", "doc", "docx"],
-  filename: (req, file, cb) => {
-    const ext = file.originalname.split(".").pop(); // Lấy phần mở rộng file
-
-    cb(null, (file.originalname + "." + ext));
-  },
-  // Lưu vào folder documents trên cloudinary
-  params: {
-    folder: "documents",
-    resource_type: "raw"
-  },
-});
-
-// Upload cấu hình cho ảnh (giữ nguyên)
-const upload = multer({
-  storage: storage,
-  // kiểm tra định dạng file
-  fileFilter: (req, file, cb) => {
-    const allowedFormats = ["image/jpeg", "image/png", "image/gif"];
-    // nếu định dạng file được phép upload thì accept
-    if (allowedFormats.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error("Invalid file format. Only JPG, PNG, and GIF are allowed!"),
-        false
-      );
+    let resourceType = "raw"; // mặc định docs/excel/pdf
+    if (file.mimetype.startsWith("image/")) {
+      resourceType = "image";
     }
+
+    return {
+      folder: "attachments",
+      resource_type: resourceType, // image | raw
+      public_id: baseName, // giữ tên file gốc (không random nữa)
+      format: ext, // giữ đúng đuôi
+    };
   },
 });
 
-// Upload cấu hình mới cho tài liệu
-const uploadDocument = multer({
-  storage: documentStorage,
+// Middleware upload
+const uploadMixed = multer({
+  storage,
   fileFilter: (req, file, cb) => {
-    const allowedFormats = [
+    const allowedImage = ["image/jpeg", "image/png", "image/gif"];
+    const allowedDocs = [
       "application/pdf",
       "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ];
 
-    if (allowedFormats.includes(file.mimetype)) {
+    if (allowedImage.includes(file.mimetype) || allowedDocs.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(
-        new Error("Invalid file format. Only PDF, DOC, and DOCX are allowed!"),
-        false
-      );
+      cb(new Error("File type not allowed"), false);
     }
   },
-  limits: {
-    fileSize: 10 * 1024 * 1024, // Giới hạn kích thước 10MB
-  }
+  limits: { fileSize: 20 * 1024 * 1024 }, // max 20MB
 });
 
-module.exports = { upload, uploadDocument };
+module.exports = { uploadMixed };
